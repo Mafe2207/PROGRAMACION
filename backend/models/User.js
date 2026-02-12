@@ -1,6 +1,6 @@
 //modelo de usuario
 /*define la estructura de base de datos para los usuarios, encripta la contraseña manejo de roles(admin,coordinador  y auxiliar)*/
-const mongoose = require(´mongoose´);
+const mongoose = require('mongoose');
 const bcrypt= require('bcryptjs');
 
 //estructura de la base de datos para los usuarios
