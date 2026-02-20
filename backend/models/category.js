@@ -1,21 +1,22 @@
 /** 
- * modelo de categoria MONGODB
- * define la estructura d ela categoria 
+ * Modelo de categoria MONGODB
+ * Define la estructura de la categoria 
  */
 
-const mongoose=require('mongoose');
+const mongoose=require('mongoose'); // Importa la libreria de MONGODB
 
-//campos de la tabla categoria 
+//Campos de la tabla categoria 
 
-const categorySchema = new mongoose.Schema({
-  //nombre de la categoria unico y requerido
-  name:{
+//Definicion de la estructura en mongosee, dentro de el se define el campo 'name' y de definen  las reglas especificas que va a tener
+
+const categorySchema = new mongoose.Schema({name:{
+ //nombre de la categoria unico y requerido 
     type: String,
     required: [true, 'el nombre es obligatorio'],
     unique: true,
     trim: true //elimina espacios en blanco al inicio y al final
   },
-  // Descripcion dela categoria - requerida 
+  // Descripcion de la categoria - requerida 
   descripcion:{
     type: String,
     required:[true, 'la categoria es requerida'],
