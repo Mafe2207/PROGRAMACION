@@ -129,7 +129,7 @@ exports.getProducts = async (req, res) => {
             .populate('subcategory', 'name')
             .sort({ createdAt: -1});
         //si el usuario es auxiliar, no mostrar información de quien lo creó
-        if (req.user &&req.user.role === 'auxiliar'){
+        if (req.user &&req.user.role === 'auxiliar') {
         //ocultar campo cerateBy para usuarios auxiliares
 
         products.forEach(product => {
@@ -150,7 +150,7 @@ exports.getProducts = async (req, res) => {
             message: 'Error al obtener producto',
             error: error.message
         });
-    }
+    };
 };
 
 /**
@@ -164,35 +164,45 @@ exports.getProducts = async (req, res) => {
 exports.getPorductById = async (req, res) => {
     try {
         const product = await Product.findById(req.params.id)
-            .populate('ctageory', 'name descripcion')
+            .populate('category', 'name descripcion')
             .populate('subcategory', 'name descripcion');
+
         if (!product) {
             return res.status(400).json({
                 success: false,
                 message: 'Producto no encontrado'
             });
         }
-// Ocultar
-if (req.user && req.user.role === 'auxiliar') {
-    product.createdBy = undefined;
-}
 
-res.status(200).json({
-    success: true,
-    data: product
-});
+        // Ocultar createdBy para usuarios auxiliares 
+        if (req.user && req.user.role === 'auxiliar') {
+            product.createdBy = undefined;
+        }
 
-} catch (error) {
-    console.error('Error en getproductById: ',error);
-    res.status(500).json({
-        success: false,
-        message 'Error al obtener producto',
-        error: error.message
-    });
+        res.status(200).json({
+            success: true,
+            data: product
+        });
+
+    } catch (error) {
+        console.error('Error en getproductById: ',error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener producto',
+            error: error.message
+     });
+   }
 };
 
 /**
- * UPDATE
+ * UPDATE: Actualizar un producto
+ * 
+ * PUT /api/products/:id
+ * body: { cualquier campo a actualizar}
+ * 
+ * - Solo actualiza campos enviados 
+ * - Valida re3laciones si se envian category o subcategory
+ * - Retorna producto actiualizado
  */
 
 exports.updateProduct = async (req, res) => {
@@ -208,7 +218,7 @@ exports.updateProduct = async (req, res) => {
         if (category) updateData.category = category;
         if (subcategory) updateData.subcategory = subcategory;
 
-        // validar relaciones
+        // validar relaciones si se actualizan 
         if (category || subcategory) {
             if (category) {
                 const categoryExist = await Category.findById(category);
@@ -226,33 +236,40 @@ exports.updateProduct = async (req, res) => {
                     category: category || updateData.category
                 });
                 if (!subcategoryExist) {
-                    return res.status](404).josn({
+                    return res.status(404).josn({
                         success: false,
-                        message: 'a subcategoria no existe o no pertenece a la categoria'
+                        message: 'La subcategoria no existe o no pertenece a la categoria'
                     });
                 }
             }
         }
-//  Actualizat producto en BD
-const updateProduct = await Product = await Product.findByIdAndupdate(req.params.id, updateData,{
-    new: true,
-    runvalidators: true
-}).populate('category', 'name')
-    .populate('subcategory', 'name')
-    .populate('createdBy', username email);
+        //  Actualizat producto en BD
+        const updateProduct = await Product.findByIdAndupdate(req.params.id, updateData,{
+            new: true,
+            runvalidators: true
+        }).populate('category', 'name')
+            .populate('subcategory', 'name')
+            .populate('createdBy', 'username email');
     
-if (!updateProduct) {
-    return res.status(400).json({
-        success: false,
-        message: 'Producto no encontrado'
-    });
-}
+        if (!updateProduct) {
+            return res.status(400).json({
+                success: false,
+                message: 'Producto no encontrado'
+            });
+        }
 
-res.status(200).json({
-    success: true,
-    message: 'product actualizado exitosamente',
-    error: error.message
-});
+        res.status(200).json({
+            success: true,
+            message: 'product actualizado exitosamente',
+            error: error.message
+        });
+    } catch (error) {
+        console.error('Error en updateProduct: ', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al actualizar producto',
+            error: error.message
+        });
     }
 };
 
@@ -263,20 +280,23 @@ res.status(200).json({
  * query params:
  * - hardDelete=true : Eliminar permanentemente de la BD
  * - -Default: soft delete (marcar como incativo)
+ * 
+ * SOFT DELETE: Solo marca actie: false
+ * HARD DELETE: Elimina permanentemente el documento 
  */
-exports.deleteProduct = Aasync (req, res) => {
+exports.deleteProduct = async (req, res) => {
     try {
         const isHardDelete = req.query.hardDelete === 'true';
         const product = await Product.findById(req.params.id);
 
         if(!product) {
-            return res.status(400).josn({
+            return res.status(404).json({
                 success: false,
                 message: 'Producto no encontrado',
             });
         }
         if (isHardDelete) {
-            // ===HARD DELETE:
+            // ===HARD DELETE: Eliminar permanentemente de la BD
             await Product.findByIdAndDelete(req.params.id);
             res.status(200).json({
                 success:true,
@@ -284,15 +304,16 @@ exports.deleteProduct = Aasync (req, res) => {
                 data: product
             });
         } else {
-            // === SOFT DELETE:Solo marcar inactivo ====
+            // === SOFT DELETE:Solo marcar como inactivo ====
             product.active = false;
             await product.save();
-            res.status(200).josn({
+            res.status(200).json({
                 success: true,
                 message: 'Producto desactivado exitosamente (soft delete)',
                 data: product
             });
         }
+
     } catch (error) {
         console.error('Error en deleteProduct: ', error);
         res.status(500).json({
