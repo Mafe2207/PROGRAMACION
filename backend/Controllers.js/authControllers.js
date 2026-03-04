@@ -1,20 +1,21 @@
 /**
- * Controlador de autenticación
- * MAneja el registro login y generacion de token JWT
+ * Controlador de autenticación para el backend.
+ * Maneja el registro login y generacion de token JWT
  */
 
 const User = require('../models/User');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const config = require('../config/auth.config');
+const bcrypt = require('bcrypt'); // encriptar es un modelo de seguridad para las contraseñas, no se pone en las carpetas. 
+const jwt = require('jsonwebtoken'); //para generar el token de autenticación 
+const config = require('../config/auth.config'); //para obtener la clave secreta del JWT
 
 /**
- * SIGNUP: Crear nuevo usuario
- * POST )api/auth/signup
- * Body{username, email. password, role}
+ * SIGNUP: Registro o creacion de usuario
+ * POST /api/auth/signup - RUTA
+ * Body: {username, email. password, role}
+ * 
  * crear usuario en la base de datos 
  * encripta contraseña antes de guardar con bcrypt
- * genera token JWT
+ * genera token JWT para el usuario registrado
  * Retorna usuario sin mostrar la contraseña 
  * */ 
 
@@ -24,11 +25,12 @@ exports.signup = async (req , res) => {
         const user = new User({
             username: req.body.username,
             email: req.body.email,
-            password: requestAnimationFrame.body.password,
-            role: req.body.role || 'auxiliar' //por defecto el rol es auxiliar
+            password: req.body.password,
+            role: req.body.role || 'auxiliar' //por defecto el rol es auxiliar si no especifica 
         });
-        //guardar en base de datos
-        //la contraseña se encripta automaticamente en el middelware del modelo 
+
+        //Guardar en base de datos
+        //La contraseña se encripta automaticamente en el middelware del modelo 
         const savedUser = await user.save();
 
         //generar token jwt que expira en 24 horas 
@@ -39,59 +41,61 @@ exports.signup = async (req , res) => {
                 email:savedUser.email
             },
             config.secret,
-            {expiresIn: config.jwExperiration}
+            {expiresIn: config.jwExpiration}
         );
         // preparando respuesta
-        constUserResponse = {
+        const userResponse = {
             id: savedUser._id,
             username: savedUser.username,
-            email: savedUser.role,
+            email: savedUser.email,
+            role: savedUser.role,
         };
+        //POSTMAN 200 AFIRMATIVO- USUARIO REGISTRADO EXITOSAMENTE 
         res.estatus(200).json({
             succes:true,
-            message: 'Usuario registrado exitosamente',
-            user: userResponse,
-            token: token
+            message: 'Usuario registrado exitosamente!',
+            token: token,
+            user: userResponse
         });
     } catch (error) {
         return res.status(500).json({
             success:false,
-            message: 'Error en el registro',
+            message: 'Error en el registro de usuario!',
             error: error.message
         });
     }
 };
 
 /** 
- * SIGIN: Iniciar sesiíon
- * POST /api/auth/signin
- * Body{email o usuario, password}
- * busca el usuario por email o username
+ * SIG IN: Iniciar sesiíon
+ * POST /api/auth/signin -RUTA
+ * Body: {email o usuario, password}
+ * busca el usuario por email o username en la base de datos
  * valida la contraseña con bcrypt
  * si es correcto el token JWT
- * Token se usa para autenticxar facturas solicitudes
+ * Token se usa para autenticar futuras solicitudes del usuario
  */
 
-exports.sinnin = async (req, res) => {
+exports.sigin = async (req, res) => {
     try {
         //validar que se envie el email o username
         if(!req.body.email && !req.body.username) {
             return res.status(400).json({
                 success: false,
-                message: 'email o username requerido'
+                message: 'Email o username requerido!'
             });
         }
-        //valuidar que se envie la contraseña 
+        //validar que se envie la contraseña 
         if(!req.body.password){
             return res.status(400).json({
                 success: false,
-                message:'password requerido '
+                message:'Password requerido '
             });
         }
 
         //buscar usuario por email o username
-        const user = await User.findone({
-            $or:[
+        const user = await User.findOne({
+            $or:[ //funciona como un "o" lógico - array - agarra cualquiera de los dos o los que esten 
                 {username: req.body.username},
                 {email: req.body.email}
             ]
@@ -113,37 +117,38 @@ exports.sinnin = async (req, res) => {
             }); 
         }
 
-        //Cpmparar contraseña enviada con el hash almacenado
-        const ispasswordValid = await bcrypyt.compare
-        (req .body.password, user.password);
+        //Comparar contraseña enviada con el hash almacenado -HASH: contraseña encriptada
+        const ispasswordValid = await bcrypyt.compare (req .body.password, user.password);
         
         if (!isPasswordValid) {
             return res.status(401).json({
                 success:false,
-                message: 'Contraseña incorrecta'
+                message: 'Contraseña incorrecta!'
             });
         }
 
         //Generar token JWT 24 horas
         const token = jwt.sign(
             {
-                id: user.role,
+                id: user._id,
                 role: user.role,
                 email: user.email
             },
             config.secret,
-            {expiresIn: config.jwtExpiration}
+            { expiresIn: config.jwtExpiration}
         );
 
         //prepara respuesta sin mostrar contraseña 
         const userResponse = {
             id: user._id,
-            username: user.email,
+            username: user.username,
+            email: user.email,
             role: user.role
         };
+        //POSTMAN 200 AFIRMATIVO - Usuario registrado exitosamente
         res.status(200).json({
             success: true,
-            message: 'Inicio de sesion exitoso',
+            message: 'Inicio de sesion exitoso!',
             token:token,
             user: UserResponse
         });
@@ -154,4 +159,4 @@ exports.sinnin = async (req, res) => {
             error: error.message
         }); 
     }
-}
+};

@@ -1,5 +1,5 @@
 /**
- * MIDDLEWARE DE VERIFICACION JWWWT
+ * MIDDLEWARE DE VERIFICACION JWT
  * middleware para verificar y validar tokens JWT en las solicitudes 
  * se usa en todas las rutas protegidas para auetenticar usuarios
  * caracteristicas:
@@ -9,9 +9,10 @@
  * extrae informacion del token (id role email) //trae token e informacion adjunta
  * la adjunta a req.userId req.Role, req.userEmail para uso en los controladores
  * manejo de errores con codigo 403/401 apropiados 
+ * 
  * flujo:
- * 1. lee el header Athorization o x-access-token
- * 2. Extraee el token (quita el bearer si es necesario)
+ * 1. lee el header Authorization o x-access-token
+ * 2. Extrae el token (quita el bearer si es necesario)
  * 3. verifica el token con JWT_SECRET
  * 4. Si es valido continua al siguiente middleware
  * 5. si es invalido retorna 401 Unauthorized

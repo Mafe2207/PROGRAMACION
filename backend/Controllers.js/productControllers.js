@@ -11,6 +11,7 @@
 const product = require('../models/Product');
 const Category = require('../models/Category');
 const Subcategory = require('../ models/Subcategory');
+
 /**
  * /**
  * CREATE: crear nuevo producto
@@ -27,30 +28,38 @@ const Subcategory = require('../ models/Subcategory');
 
 exports.createProduct = async (req, res) => {
     try { 
+
         const { name, descripcion, price, stock, category, subcategory} = req.body;
+        
         //=== VALIDACIONES === 
+        
         //Verificar que todos los campos requeridos esten presentes
-        if (!name|| !descripcion || !price || !stock || !category ||!subcategory) {
-           return res.status(400).json({
+        if (!name|| !description || !price || !stock || !category ||!subcategory) {
+           
+            return res.status(400).json({
             success: false,
             message: 'todos los campos obligatorios',
             requiredFields: ['name', 'descripcion', 'price', 'stock','category', 'subcategory']
            }); 
         }
+
         // validar que la categoria existe
-            const categoryExist = await Category.findById(category);
-            if (!categoryExist) {
+            const categoryExists = await Category.findById(category);
+            if (!categoryExists) {
                 return res.status(404).json({
                     success: false,
-                    message: 'la subcategoria no existe o no pertenece a la categoria especificada'
+                    message: 'la subcategoria no existe o no pertenece a la categoria especificada',
+                    categoryId: category
                 });
             }
-         // Validar que la subcategoria existe y pertenece a la subcategoria especificada
-         const subcategoryExist = await Subcategory.findOne({
+
+         // Validar que la categoria existe y pertenece a la subcategoria especificada
+         const subcategoryExists = await Subcategory.findOne({
             _id: subcategory,
             category: category
          });
-         if (!subcategoryExist) {
+
+         if (!subcategoryExists) {
             return res. status(400).json({
                 success: false,
                 message: 'la subcategoria no existe o no pertenece a la categoria especificada'
@@ -109,17 +118,18 @@ const productWithDetails = await Product.findById(savedProduct._id)
 
 /**
  * READ: Obtener productos (con filtros de ativos/inactivos)
- * 
  * GET /api/products 
  * Query params:
- * -IcnludeInactive=true : Mostrar productos descativados
- * - Default: Solo productis poblados con categoria y subcategoria
- * Retorna: Array de productos poblados con categoria y subcategoria
+ * -IcnludeInactive = true : Mostrar productos descativados
+ * - Default: Solo productos activos (active = true)
+ * Retorna: 
+ * 1- 200: Array de productos poblados con categoria y subcategoria
+ * 2- 500: Error en el servidor
  */
 
 exports.getProducts = async (req, res) => {
     try {
-        // Determinar si inluir productos inactivos 
+        // Determinar si incluir productos inactivos 
         const includeInactive = req.query.includeInactive === 'true';
         const activeFilter = includeInactive ? {} : { active: { $ne: false} };
 
@@ -163,9 +173,10 @@ exports.getProducts = async (req, res) => {
 
 exports.getPorductById = async (req, res) => {
     try {
+        //Obtener el producto por ID con datos relacionados (populate)
         const product = await Product.findById(req.params.id)
             .populate('category', 'name descripcion')
-            .populate('subcategory', 'name descripcion');
+            .populate('subcategory', 'name description');
 
         if (!product) {
             return res.status(400).json({
@@ -185,7 +196,7 @@ exports.getPorductById = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error en getproductById: ',error);
+        console.error('Error en getproductById: ', error);
         res.status(500).json({
             success: false,
             message: 'Error al obtener producto',
@@ -196,23 +207,22 @@ exports.getPorductById = async (req, res) => {
 
 /**
  * UPDATE: Actualizar un producto
- * 
  * PUT /api/products/:id
  * body: { cualquier campo a actualizar}
  * 
  * - Solo actualiza campos enviados 
- * - Valida re3laciones si se envian category o subcategory
- * - Retorna producto actiualizado
+ * - Valida relaciones si se envian category o subcategory
+ * - Retorna: producto actiualizado
  */
 
 exports.updateProduct = async (req, res) => {
     try{
-        const { name, descripcion, price, stock, category, subcategory } = req.body;
-        const upData = {};
+        const { name, description, price, stock, category, subcategory } = req.body;
+        const updateData = {};
 
-        // Agregar
+        // Agregar solo lois campos que fueronb enviados 
         if (name) updateData.name = name;
-        if(descripcion) updateData.descripcion = descripcion;
+        if(description) updateData.descripcion = descripcion;
         if (price) updateData.price = price;
         if (stock) updateData.stock = stock;
         if (category) updateData.category = category;
@@ -221,9 +231,9 @@ exports.updateProduct = async (req, res) => {
         // validar relaciones si se actualizan 
         if (category || subcategory) {
             if (category) {
-                const categoryExist = await Category.findById(category);
-                if (!categoryExist) {
-                    return res.status(404).josn({
+                const categoryExists = await Category.findById(category);
+                if (!categoryExists) {
+                    return res.status(400).josn({
                         success: false,
                         message: 'la categoria solicitada no existe'
                     });
@@ -231,11 +241,12 @@ exports.updateProduct = async (req, res) => {
                 }
             }
             if (subcategory) {
-                const subcategoryExist = await subcategory.findOne({
+                const subcategoryExists = await subcategory.findOne({
                     _id: subcategory,
                     category: category || updateData.category
                 });
-                if (!subcategoryExist) {
+
+                if (!subcategoryExists) {
                     return res.status(404).josn({
                         success: false,
                         message: 'La subcategoria no existe o no pertenece a la categoria'
@@ -243,7 +254,7 @@ exports.updateProduct = async (req, res) => {
                 }
             }
         }
-        //  Actualizat producto en BD
+        //  Validar en producto en BD
         const updateProduct = await Product.findByIdAndupdate(req.params.id, updateData,{
             new: true,
             runvalidators: true
@@ -260,9 +271,10 @@ exports.updateProduct = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'product actualizado exitosamente',
-            error: error.message
+            message: 'producto actualizado exitosamente',
+            data: updateProduct
         });
+
     } catch (error) {
         console.error('Error en updateProduct: ', error);
         res.status(500).json({
@@ -275,12 +287,10 @@ exports.updateProduct = async (req, res) => {
 
 /**
  * DELETE: Eliminar o desactivar un producto
- * 
  * DELETE /api/products/:id
  * query params:
  * - hardDelete=true : Eliminar permanentemente de la BD
  * - -Default: soft delete (marcar como incativo)
- * 
  * SOFT DELETE: Solo marca actie: false
  * HARD DELETE: Elimina permanentemente el documento 
  */
@@ -295,6 +305,7 @@ exports.deleteProduct = async (req, res) => {
                 message: 'Producto no encontrado',
             });
         }
+
         if (isHardDelete) {
             // ===HARD DELETE: Eliminar permanentemente de la BD
             await Product.findByIdAndDelete(req.params.id);
@@ -303,6 +314,7 @@ exports.deleteProduct = async (req, res) => {
                 message: 'producto eliminado permanentemente de la base de datos',
                 data: product
             });
+            
         } else {
             // === SOFT DELETE:Solo marcar como inactivo ====
             product.active = false;
