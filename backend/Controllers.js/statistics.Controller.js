@@ -3,16 +3,16 @@
  * get /alpi/statistics
  * Ath Baerer token requerido
  * Estadisticas disponibles:
- * total de usuarios
- * total de productos
- * total de categorias
+ * 1- total de usuarios
+ * 2- total de productos
+ * 3- total de categorias
  * total de subcategorias
  */
 
 const User = require ('../models/User');
 const Product = require ('../models/Product');
-const Category = require ('../models/category');
-const Subcategory = require (../models/Subcategory);
+const Category = require ('../models/Category');
+const Subcategory = require ('../models/Subcategory');
 
 /**
  * 
@@ -20,8 +20,8 @@ const Subcategory = require (../models/Subcategory);
 
 const getStatistics = async (req, res) => { 
     try{
-        //ejecuta todas las queries en paralelo
-        const [totalUsers, totalProducts, totalCategories, totalSubcategories] =await
+        //ejecuta todas las querys en paralelo
+        const [totalUsers, totalProducts, totalCategories, totalSubcategories] = await
         Promise.all([
             User.countDocuments(), //contar usuarios
             Product.countDocuments(), //contar productos
@@ -37,7 +37,7 @@ const getStatistics = async (req, res) => {
             totalSubcategories
         });
     } catch (error) {
-        console.error ('Error en obtener estadisticas', error);
+        console.error ('Error en getStatistics', error);
         res.status(500).json ({
             Success: false,
             message: 'Error al obtener estadisticas',
