@@ -8,27 +8,29 @@
  */
 
 const Subcategory = require('../models/Subcategory');
-const Category = require('../models/category');
+const Category = require('../models/Category');
 /**
  * Create: crear nueva subcategoria
  * POST /api/subcategories
  * auth bearer token requerido
  * roles: admin y coordinador
  * body requerido
- * name: nombre de la categoria
- * descripcion: descripcion de la subcategoria
+ * - 1name: nombre de la categoria
+ * 2- descripcion: descripcion de la subcategoria
  * retorna: 
- * 2010: subcategoria creada en MongoDB
- * 400: validacion fallida o nombre duplicado
- * 500: error en la base de datos
+ * 1- 2010: subcategoria creada en MongoDB
+ * 2- 400: validacion fallida o nombre duplicado
+ * 3- 404: Categoria padre no existe 
+ * 4- 500: error en la base de datos
  */
-exports.createSubategory = async (req, res) => {
+exports.createSubcategory = async (req, res) => {
     try{
-        const { name, descripion, category } = req.body;
+        const { name, description, category } = req.body;
         
         
         //Validar que la categoria padre exista
         const parentCategory = await Category.findById(category); 
+
         if (!parentCategory){
             return res.status(404).json({
                 success: false,
@@ -36,10 +38,10 @@ exports.createSubategory = async (req, res) => {
             });
         }
 
-        // crear nueva categoria
-        const newCategory = new Subcategoryategory({
-            name: name.trim(),
-            description: description.trim(),
+        // crear nueva Subcategoria
+        const newSubcategory = new Subcategory({
+            name: name.trim(), // Guarda el nombre sin espacios en blanco al crear la categoria
+            description: description.trim(), //Guaradaa la descripcion soin espacios enb blanco al crear la categoria 
             category: category
             
         });
@@ -52,6 +54,7 @@ exports.createSubategory = async (req, res) => {
         });
     } catch (error) {
         console.error('Error en crear la Sub Categoria:', error);
+
         //manejo de error de indice unico
         if(error.message.includes('duplicate key') || error.message.includes ('ya existe')){
             return res.status(400).json ({
@@ -64,7 +67,7 @@ exports.createSubategory = async (req, res) => {
             succes: false, 
             message: 'Error al crear catrgory',
 
-        })
+        });
     }
 };
 
@@ -84,20 +87,21 @@ exports.getSubCategories = async (req, res) => {
     //por defecto solo las categorias activas
     //includeInactive=true permite ver desactivadas
     const includeInactive = req.query.includeInactive === 'true';
-    const activeFilter = includeInactive ? {} : {
-        active: { $ne: false} };
-        const categories = await Category.find(activeFilter).sort({createdAt: -1});
-        res.status(200).json ({
-            success: true,
-            data: categories
-        });
-    } catch (error) {
-        console.error('Error en getCategories', error);
-        res.status(500).json ({
-            succes: false,
-            message: 'Error al obtener categorias'
-        })
-    }    
+    const activeFilter = includeInactive ? {} : { active: { $ne: false }};
+        
+    const subcategories = await Subcategory.find(activeFilter).populate('category', 'name');
+    res.status(200).json ({
+        success: true,
+        data: subcategories
+    });
+
+} catch (error) {
+    console.error('Error en subcategorias', error);
+    res.status(500).json ({
+        succes: false,
+        message: 'Error al obtener categorias'
+    });
+}    
 
 };
 
@@ -110,7 +114,7 @@ exports.getSubcategoryById = async (req, res) => {
     try{
         //por defecto solo se muestran las categorias activas
         // IncludeInactive = true permite ver todas las categorias incluyendo las desactivadas
-        const Subcategory = await Subcategory.findById(req.params.id);
+        const subcategory = await Subcategory.findById(req.params.id).populate('category', 'name');
 
         if (!Subcategory) {
             return res.status(404).json({
@@ -118,10 +122,12 @@ exports.getSubcategoryById = async (req, res) => {
                 message: 'Subcategoria no encontrada'
             });
         }
+
         res.status(200).json({
-            succes: false,
+            succes: true,
             data: subcategory
         });
+
     } catch (error) {
         console.error('Error en obtener subcategoria por id', error);
         res.status(500).json({
@@ -135,27 +141,30 @@ exports.getSubcategoryById = async (req, res) => {
  * UPDATE Actualizar Subcategoria existente
  * PUT /api/Subcategories/:id
  * Auth Bearer token requerido 
- * Rolos: admin y coordinaria
+ * Roles: admin y coordinador
+ * Body:
  * 1 - name: nombre de la Subcategoria 
  * 2 - descripcion: nueva descripcion de la Subcategoria
- * Si quiere solo actualiza el nombre o solo la descripcion o los dos
+ * 3- category: nuevo id de la categoria
+ * VALIDACIONES:
+ * - Si se cambia la categoria, verifica que exista
+ * - Si quiere solo actualiza el nombre o solo la descripcion o los dos
  * Retorna:
- * 1- 200: Categoria actualizada
- * 2- 400: Validacion de datos fallida o nombre duplicado
- * 3- 404: Categoria no encontrada
- * 4- 500: Erro en la base 
+ * 1- 200: subCategoria actualizada
+ * 2- 404: subcategoria no encontrada
+ * 3- 500: Error en la base de datos
  */
 
 exports.updateSubcategory = async (req, res) => {
     try {
 
-        const {name, descripion, category} = req.body;
+        const {name, description, category} = req.body;
 
         // Verificar si cambia la categoria padre
 
         if (name) {
 
-            const existingCategory = await Category.findById(category);          
+            const parentCategory = await Category.findById(category);          
             // Asegura que el nuevo nombre no sea el mismo id
             if (!parentCategory) {
                 return res.status(400).json({
@@ -165,8 +174,8 @@ exports.updateSubcategory = async (req, res) => {
             }
         }
         
-        // Construir el objeto con los datos actualizados
-        const updateSubcategory = await Subcategory.findByIdAndUpdate(req.params.id, { name: name ? name.trim(): undefined, description: description ? descripion.trim(): undefined, category}, {new: true, runValidators: true});
+        // Construir el objeto de actualizacion solo con campos enviados
+        const updateSubcategory = await Subcategory.findByIdAndUpdate(req.params.id, { name: name ? name.trim(): undefined, description: description ? descripion.trim(): undefined, category}, { new: true, runValidators: true});
         
         if (!updateSubcategory) {
             return res.status(404).json({
@@ -176,7 +185,7 @@ exports.updateSubcategory = async (req, res) => {
         }
 
         res.status(200).json({
-            succes: false,
+            succes: true,
             message: 'Subcategoria actualizada exitosamente',
             data: updateSubcategory
         });
@@ -192,7 +201,7 @@ exports.updateSubcategory = async (req, res) => {
 };
 
 /**
- * DELETE eliminar o desactivar una categoria
+ * DELETE eliminar o desactivar una subcategoria
  * DELETE /api/Subcategories/:id
  * Auth Bearer token requerido
  * Roles: admin
@@ -202,7 +211,7 @@ exports.updateSubcategory = async (req, res) => {
  * Default: Soft delete (solo desactivar)
  * SOFT DELETE: Marca la Subcategoria como inactiva
  * Desactiva en cascada todos los productos relacionados a la Subcategoria
- * Al activar retorna todos los datos de la categoria incluyendo los inactivos
+ * Al activar retorna todos los datos de la subcategoria incluyendo los inactivos
  * 
  * HARD DELETE: Elimina permanenetemente la Subcategoria de la base de datos
  * Elimina en cascada la subcategoria productos relacionados
@@ -220,12 +229,12 @@ exports.deleteSubcategory = async (req, res) => {
         const isHardDelete = req.query.hardDelete === 'true';
 
         // Buscar la subcategoria a eliminar por su id
-        const subcategory = await subcategory.findById(req.params.id);
+        const subcategory = await Subcategory.findById(req.params.id);
 
         if (!subcategory) {
             return res.status(404).json({
                 success: false,
-                message: 'Subategoria no encontrada'
+                message: 'Subcategoria no encontrada'
             });
         }
 
@@ -233,14 +242,14 @@ exports.deleteSubcategory = async (req, res) => {
             // Eliminar en cascada subcategorias y productos relacionados
 
             // Paso 1 - Obtener IDs de todas los productos relacionados
-            await Product.deleteMany({subcategory: req.params.id });
+            await Product.deleteMany({ subcategory: req.params.id });
 
             // Paso 2 - Eliminar todas los productos de la categoria
-            await Product.findByIdAndDelete( req.params.id );
+            await Subcategory.findByIdAndDelete( req.params.id );
 
             res.status(200).json({
                 success: true,
-                message: 'SubCategoria eliminada permanentemente y sus productos relacionados',
+                message: 'Subcategoria eliminada permanentemente y sus productos relacionados',
                 data: {
                     subcategory: subcategory
                 }
@@ -255,21 +264,21 @@ exports.deleteSubcategory = async (req, res) => {
             // Desactivar todos los productos ralacionados
             
             const products = await Product.updateMany(
-                { category: req.params.id },
+                { subcategory: req.params.id },
                 { active: false}
             );
 
             res.status(200).json({
                 success: true,
-                message: 'SubCategoria desactivada exitosamente como sus subcategorias y productos relacionados',
+                message: 'Subcategoria desactivada exitosamente como sus subcategorias y productos relacionados',
                 data: {
                     subcategory: subcategory,
-                    ProductDeactivated: Product.modifiedCount,
+                    productsDeactivated: Product.modifiedCount,
                 }
             });
         } 
     } catch (error) {
-        console.error('Error en deleteCategory', error);
+        console.error('Error al desactivasr la subcategoria', error);
         res.status(500).json({
             success: false,
             message: 'Error al desactivar la subcategoria',
