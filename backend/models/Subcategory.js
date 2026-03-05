@@ -14,7 +14,7 @@ const subcategorySchema = new mongoose.Schema({
   //Nombre de la subcategoria unico y requerido
   name:{
     type: String,
-    required: [true, 'el nombre es obligatorio'],
+    required: [true, 'El nombre es obligatorio'],
     unique: true,// no pueden haber dos subcategorias con el mismo nombre
     trim: true //elimina espacios en blanco al inicio y al final
   },

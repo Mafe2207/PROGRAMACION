@@ -9,7 +9,7 @@ module.exports = {
     jwtExpiration: process.env.JWT_EXPIRATION || 86400, //24 horas
     //tiempo de expiracion de refrescar token 
     jwtRefresh: 6048000, //7 dias
-    // numero de rondas para encriptar la contraseña
+    // numero de rondas para encriptar la contraseñapor primera vez
     slatRounds: process.env.SALT_ROUNDS || 8
 
 };

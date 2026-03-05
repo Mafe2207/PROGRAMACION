@@ -69,18 +69,18 @@ const productSchema = new mongoose.Schema({
 
   // Array de urls de imagenes del productos
   images: [{
-    type: String, //url d ela imagen
+    type: String, //url de la imagen
   }],
 
   //Active y desactiva la categoria pero no la elimina
   active: {
-    type: Boolean,
-    default: true
+    type: Boolean, // tiene dos opciones verdadero o falso 
+    default: true // en este caso verdadero
   }
 
 },{
 
- timestamps: true, //agregar createdAt y updateAT automaticamente
+ timestamps: true, //agregar createdAt y updateAT automaticamente// registro oculto
  versionKey: false, //No incluir campos _v 
 });
 /**
@@ -96,7 +96,7 @@ const productSchema = new mongoose.Schema({
 ignora errrores si el indice mo exite 
 continua con lel guardado normal
  */
-subcategorySchema.post('save', function(error,doc,next) {
+subcategorySchema.post('save', function(error,doc,next) { // doc se pone por cndicion, verific el error y envia el mensaje que puede ser un campo duplicado y existe con ese nomnbre
   // verificar si el error de mongoDB por violacion fr indice univo
   if (error.name === 'MongoServerError' && error.code === 1000) {
       return next(new Error('ya existe un producto con ese nombre'))
@@ -115,4 +115,4 @@ subcategorySchema.post('save', function(error,doc,next) {
 
 
 //Exportar el modelo 
-module.exports = mongoose.model('Product', productSchema);
+module.exports = mongoose.model('Product', productSchema); //

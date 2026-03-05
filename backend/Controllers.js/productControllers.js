@@ -7,8 +7,8 @@
  * Incluye soft delete (marcar como incativo)
  * y hard delete (eliminación permanente)   
  */
-
-const product = require('../models/Product');
+ // trae esquemas de productos
+const Product = require('../models/Product');
 const Category = require('../models/Category');
 const Subcategory = require('../ models/Subcategory');
 
@@ -26,26 +26,25 @@ const Subcategory = require('../ models/Subcategory');
  * 500: Error en base de datos
  * */
 
-exports.createProduct = async (req, res) => {
+exports.createProduct = async (req, res) => { // esta funcion exporta la peticion y la respuesta de http 
     try { 
 
-        const { name, descripcion, price, stock, category, subcategory} = req.body;
+        const { name, description, price, stock, category, subcategory} = req.body; //estructura de los campo de peticion 
         
         //=== VALIDACIONES === 
         
         //Verificar que todos los campos requeridos esten presentes
         if (!name|| !description || !price || !stock || !category ||!subcategory) {
-           
             return res.status(400).json({
             success: false,
             message: 'todos los campos obligatorios',
-            requiredFields: ['name', 'descripcion', 'price', 'stock','category', 'subcategory']
-           }); 
+            requiredFields: ['name', 'description', 'price', 'stock','category', 'subcategory']
+        }); 
         }
 
         // validar que la categoria existe
-            const categoryExists = await Category.findById(category);
-            if (!categoryExists) {
+            const categoryExist = await Category.findById(category); //busca si una categoria existe 
+            if (!categoryExist) { //si elfindBYID esta nulo dice que la categioria no existe y retorna: 
                 return res.status(404).json({
                     success: false,
                     message: 'la subcategoria no existe o no pertenece a la categoria especificada',
@@ -54,20 +53,20 @@ exports.createProduct = async (req, res) => {
             }
 
          // Validar que la categoria existe y pertenece a la subcategoria especificada
-         const subcategoryExists = await Subcategory.findOne({
-            _id: subcategory,
-            category: category
-         });
-
-         if (!subcategoryExists) {
-            return res. status(400).json({
-                success: false,
-                message: 'la subcategoria no existe o no pertenece a la categoria especificada'
+            const subcategoryExists = await Subcategory.findOne({
+                _id: subcategory,
+                category: category
             });
-         }
+
+            if (!subcategoryExists) {
+                return res. status(400).json({
+                    success: false,
+                    message: 'la subcategoria no existe o no pertenece a la categoria especificada'
+            });
+        }
 
 //===== CREAR PRODUCTO =====
-    const product = new product({
+    const product = new Product({
         name,
         descripcion,
         price,
@@ -77,20 +76,20 @@ exports.createProduct = async (req, res) => {
     });
 
     // si hay usuarios autenticado, registrar quien creo el producto
-    if (req.user && req.user._id) {
-    product.createBy = req.user._id;
+    if (req.user && req.user._id) { // va a verificar si el usuario existe en el sistema y esta verificado en el sistema
+    product.createBy = req.user._id; //asigna el id del producto
 }
 
 // Guardar en base de datos
 const savedProduct = await product.save();
 
 //Obtener producto poblado con datos de relaciones (populate)
-const productWithDetails = await Product.findById(savedProduct._id)
+const productWithDetails = await Product.findById(savedProduct._id) // trae las referencias y datos que se van a solicitar a traves del prodcuto creado y solicitado
     .populate('category', 'name')
     .populate('subcategory', 'name')
     .populate('createdBy', 'username email');
 
-    return res.status(201).json({
+    return res.status(201).json({ //lugo retorna el estado y dice que fue creado correctamente 
         success: true,
         message: 'Producto creado exitosamente',
         date: productWithDetails
@@ -104,11 +103,10 @@ const productWithDetails = await Product.findById(savedProduct._id)
         return res.status(400).json({
             success: false,
             message: 'Ya existe un producto con ese nombre'
-
         });
     }
 
-    res.status(500).json({
+    res.status(500).json({ //error de conexion al servidor 
         success: false,
         message: 'Error al crear producto',
         error: error.message
@@ -127,7 +125,7 @@ const productWithDetails = await Product.findById(savedProduct._id)
  * 2- 500: Error en el servidor
  */
 
-exports.getProducts = async (req, res) => {
+exports.getProducts = async (req, res) => { // reliza una consulta del http 
     try {
         // Determinar si incluir productos inactivos 
         const includeInactive = req.query.includeInactive === 'true';
@@ -190,7 +188,7 @@ exports.getPorductById = async (req, res) => {
             product.createdBy = undefined;
         }
 
-        res.status(200).json({
+        res.status(200).json({ //todo funciono correctaamente
             success: true,
             data: product
         });
@@ -201,8 +199,8 @@ exports.getPorductById = async (req, res) => {
             success: false,
             message: 'Error al obtener producto',
             error: error.message
-     });
-   }
+    });
+}
 };
 
 /**

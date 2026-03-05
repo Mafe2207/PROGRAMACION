@@ -1,9 +1,9 @@
 //modelo de usuario
 /*define la estructura de base de datos para los usuarios, encripta la contraseña manejo de roles(admin,coordinador  y auxiliar)*/
-const mongoose = require('mongoose');
-const bcrypt= require('bcryptjs');
+const mongoose = require('mongoose'); //conexion a moongo  bd
+const bcrypt= require('bcryptjs'); //conexion par la contraseña
 
-//estructura de la base de datos para los usuarios
+//estructura de la base de datos para los usuarios //documento qu ese inserta a mongo
 const userSchema= new mongoose.Schema({
 
 //le nombre de lusuario debe ser unico en toda base de datos 
@@ -22,7 +22,7 @@ email:{
     unique: true,
     lowercase: true, // convierte el email a minisculas
     trim: true,
-    match: [/\S+@\S+\.\S+/, 'El correo no es válido'] // valida el fpatron del email
+    match: [/\S+@\S+\.\S+/, 'El correo no es válido'] // valida el fpatron del email //modulo que obliga a que sea un email
 },
 // contraseña - requerida, minimo 6 caracteres
 password:{
@@ -34,8 +34,8 @@ password:{
 // rol de usuario restinge valores especificos 
 role: {
         type: String,
-        enum: ['admin', 'coordinador', 'auxiliar'], //solo estos valores sn permitidos
-        default: 'auxiliar' // rol por defecto, los nuevos suarios osn auxiliares 
+        enum: ['admin', 'coordinador', 'auxiliar'], //solo va a tener estos valores sespecificos
+        default: 'auxiliar' // rol por defecto, los nuevos usuarios son auxiliares 
 },
 // usuarios activos 
 active : {
@@ -43,15 +43,16 @@ active : {
     default: true // nuevos usuarios comienzan activos
     },
 },{ 
-    timestamps: true, // agregar createdAt y updatedAt automaticamente
+    timestamps: true, //cuando lo creo y modifico y deja un registro en cache // agregar createdAt y updatedAt automaticamente
     versionKey:false //no incluir __v en el control de versiones de mongoose //tiempo de creado y modificado automaticamente
 });
 
 //middleware encripta la contraeña antes de guardar el usuario 
-userSchema.pre('save', async function(next){
+userSchema.pre('save', async function(next){ //salva y encripta la contraseña,toma doc de usuario, si no lo cambia se deja quieto
     // si el 'password no fue modificado no encripta de nuevo 
     if(!this.isModified('password')) return next();
 
+    //si cambia se ejecuta la siguiente funcion : 
     try{
         // genera un salt con complejidad de 10 rondas 
         //mayor numero de rondas = mas seguro pero mas lento el proceso de encriptacion
@@ -66,4 +67,4 @@ userSchema.pre('save', async function(next){
 });
 
 //crear y exportar el modulo de usario 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model('User', userSchema); 
