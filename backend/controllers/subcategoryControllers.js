@@ -27,7 +27,6 @@ exports.createSubcategory = async (req, res) => {
     try{
         const { name, description, category } = req.body;
         
-        
         //Validar que la categoria padre exista
         const parentCategory = await Category.findById(category); 
 
@@ -40,33 +39,29 @@ exports.createSubcategory = async (req, res) => {
 
         // crear nueva Subcategoria
         const newSubcategory = new Subcategory({
-            name: name.trim(), // Guarda el nombre sin espacios en blanco al crear la categoria
-            description: description.trim(), //Guaradaa la descripcion soin espacios enb blanco al crear la categoria 
+            name: name.trim(),
+            description: description.trim(),
             category: category
-            
         });
-        await new Subcategoryategory.Save();
+        await newSubcategory.save();
         
         res.status(201).json({
-            succes: true,
+            success: true,
             message: 'Subcategoria creada exitosamente',
             data: newSubcategory
         });
     } catch (error) {
         console.error('Error en crear la Sub Categoria:', error);
 
-        //manejo de error de indice unico
-        if(error.message.includes('duplicate key') || error.message.includes ('ya existe')){
+        if(error.message.includes('duplicate key') || error.message.includes('ya existe')){
             return res.status(400).json ({
-                succes: false,
+                success: false,
                 message: 'Ya existe una Subcategoria con ese nombre'
             });
         }
-        // Error generico  del servidos
         res.status(500).json ({
-            succes: false, 
-            message: 'Error al crear catrgory',
-
+            success: false, 
+            message: 'Error al crear categoria',
         });
     }
 };
@@ -82,27 +77,24 @@ exports.createSubcategory = async (req, res) => {
  * 500: error de base de datos
 */
 
-exports.getSubCategories = async (req, res) => {
+exports.getSubcategories = async (req, res) => {
     try{
-    //por defecto solo las categorias activas
-    //includeInactive=true permite ver desactivadas
-    const includeInactive = req.query.includeInactive === 'true';
-    const activeFilter = includeInactive ? {} : { active: { $ne: false }};
+        const includeInactive = req.query.includeInactive === 'true';
+        const activeFilter = includeInactive ? {} : { active: { $ne: false }};
         
-    const subcategories = await Subcategory.find(activeFilter).populate('category', 'name');
-    res.status(200).json ({
-        success: true,
-        data: subcategories
-    });
+        const subcategories = await Subcategory.find(activeFilter).populate('category', 'name');
+        res.status(200).json ({
+            success: true,
+            data: subcategories
+        });
 
-} catch (error) {
-    console.error('Error en subcategorias', error);
-    res.status(500).json ({
-        succes: false,
-        message: 'Error al obtener categorias'
-    });
-}    
-
+    } catch (error) {
+        console.error('Error en subcategorias', error);
+        res.status(500).json ({
+            success: false,
+            message: 'Error al obtener categorias'
+        });
+    }    
 };
 
 /**

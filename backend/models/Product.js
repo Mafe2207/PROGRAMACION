@@ -49,21 +49,21 @@ const productSchema = new mongoose.Schema({
   // Un producto pertenece a una categoria pero una subcategoria puede tener muchos productos relacion 1 a muchos
 
   category: {
-    type: mongoose.Schema.Type.ObjectId,
-    ref: 'category', //puede ser poblado con .populate ('category)
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'category', //puede ser poblado con .populate('category')
     required: [true, 'la categoria es requerida']
   },
 
     subcategory: {
-    type: mongoose.Schema.Type.ObjectId,
-    ref: 'subcategory', //puede ser poblado con .populate ('subcategory)
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'subcategory', //puede ser poblado con .populate('subcategory')
     required: [true, 'la subcategoria es requerida']
   },
 
   //quien creo el producto
   //Referencia de User no requerido
   createBy: {
-    type: mongoose.Schema.Type.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User' // puede ser poblado con mostrar los usuarios
   },
 
@@ -96,8 +96,8 @@ const productSchema = new mongoose.Schema({
 ignora errrores si el indice mo exite 
 continua con lel guardado normal
  */
-subcategorySchema.post('save', function(error,doc,next) { // doc se pone por cndicion, verific el error y envia el mensaje que puede ser un campo duplicado y existe con ese nomnbre
-  // verificar si el error de mongoDB por violacion fr indice univo
+productSchema.post('save', function(error,doc,next) { // doc se pone por condicion, verifica el error y envia el mensaje que puede ser un campo duplicado y existe con ese nombre
+  // verificar si el error de mongoDB por violacion de indice univo
   if (error.name === 'MongoServerError' && error.code === 1000) {
       return next(new Error('ya existe un producto con ese nombre'))
     }  

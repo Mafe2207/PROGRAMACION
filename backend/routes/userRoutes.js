@@ -11,24 +11,22 @@
 
 const express= require('express');
 const router =express.Router();
-const userconttroller = require('../controllers/usercontrollers');
-const {verifyToken } = require('../middlewares/authJwt');
-const { checkRole } = require('../middlewares/role');
+const userController = require('../controllers/userControllers');
+const { verifyToken, checkRole } = require('../middlewares');
 
-// revision de problemas de autenticacion y autorizacion 
+// revisión de problemas de autenticación y autorización
 
 router.use((req, res, next) => {
-    console.log('\n== DIAGNOSTICO FR RUTA ==');
-    console.log(`[${new Date().toISOString()}]) ${req.methop} ${req.originalUrl}`);
+    console.log('\n== DIAGNOSTICO DE RUTA ==');
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
     console.log('Headers', {
-        'Autorizacion': req.headers.authorization ?
-        '***' + req.headers.authorization.slice(8):  
-        null,
-        'x-access-token': req.headers
-        [x-access-Token] ? '***' + req.headers
-        [x-access-token].slice(8) : null,
-        'user.agent': req.heraderss['user-agent']
+        'authorization': req.headers.authorization ?
+            '***' + req.headers.authorization.slice(8) : null,
+        'x-access-token': req.headers['x-access-token'] ?
+            '***' + req.headers['x-access-token'].slice(8) : null,
+        'user-agent': req.headers['user-agent']
     });
+    next();
 })
 
 // rutas de usurios 
@@ -39,16 +37,15 @@ router.post('/',
     userController.createUser
 );
 
-    router.get('/',
+router.get('/',
         verifyToken,
-        checkRole('admin', 'cordinador', 'auxiliar'),
+        checkRole(['admin', 'coordinador', 'auxiliar']),
         userController.getAllUsers
     );
 
     router.put('/:id',
         verifyToken,
         checkRole(['admin','coordinador']),
-        validateuserRole,
         userController.updateUser
     );
 
@@ -57,4 +54,4 @@ router.post('/',
         checkRole('admin'),//no va a validate por que borra toda la informacion
         userController.deleteUser
     );
-module.exports = routers
+module.exports = router

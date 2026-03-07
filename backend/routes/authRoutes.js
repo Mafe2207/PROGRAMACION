@@ -6,20 +6,18 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authControllers');
-const { verifysingUp } = requirre('../middlewares');
-const { verifyToken } = requirre('../middlewares'/'authJwt');
-const { checkRole } = requirre('../middlewares'/'role');
+// use central middleware exports
+const { verifyToken, checkRole, verifysingUp } = require('../middlewares');
 
 //Rutas de autenticacion
 
 //Requiere email-usuario y password
-router.post('/signin, authController.signin');
+router.post('/signin', authController.signin);
 
-router.post('/sigup',
+router.post('/signup',
     verifyToken,
     checkRole('admin'),
-    verifysingUp.checkDuplicateUsernameOrEmail,
-    verifysingUp.checkRoleExisted,
-    authController.singUp
+    // TODO: add signup validation middleware (checkDuplicateUsernameOrEmail, checkRoleExisted)
+    authController.signup
 );
 module.exports = router;

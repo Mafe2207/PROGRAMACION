@@ -12,35 +12,8 @@
 
 const express = require('express');
 const router = express.Router();
-const productController = require('/../Controllers/productController');
-const { verifyToken } = require('../middlewares/authJwt');
-const checkRole = require('../middleware/role');
-
-const validateProduct =[
-    check('name')
-        .not().isEmpty()
-        .withMessage('El nombre es obligario'),
-
-    check('description')
-        .not().isEmpty()
-        .withMessage('La descripcion es obligatoria'),
-    
-    check('price')
-        .not().isEmpty()
-        .withMessage('El precio es obligatoria'),
-
-    check('stock')
-        .not().isEmpty()
-        .withMessage('El stock obligatoria'),
-
-    check('category')
-        .not().isEmpty()
-        .withMessage('La categoria es obligatoria'),
-    
-    check('subcategory')
-        .not().isEmpty()
-        .withMessage('La subcategoria es obligatoria'),
-]
+const productController = require('../controllers/productControllers');
+const { verifyToken, checkRole } = require('../middlewares');
 
 //RUTA CRUD
 router.post('/',

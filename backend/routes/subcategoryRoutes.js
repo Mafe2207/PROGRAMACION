@@ -12,47 +12,29 @@
 
 const express = require('express');
 const router = express.Router();
-const subcategoryController = require('/../Controllers/subcategoryController');
-const { check } =require('express-validator');
-const { verifyToken } = require('../middlewares/authJwt');
-const {checkRole } = require('../middleware/role');
-
-const validateSubcategory =[
-    check('name')
-        .not().isEmpty()
-        .withMessage('El nombre es obligario'),
-
-    check('description')
-        .not().isEmpty()
-        .withMessage('La descripcion es obligatoria'),
-
-    check('category')
-        .not().isEmpty()
-        .withMessage('La categoria es obligatoria'),
-]
+const subcategoryController = require('../controllers/subcategoryControllers');
+const { verifyToken, checkRole } = require('../middlewares');
 
 //RUTA CRUD
 router.post('/',
     verifyToken,
     checkRole(['admin', 'coordinador']),
-    validateSubcategory,
     subcategoryController.createSubcategory
 );
 
 router.get('/', subcategoryController.getSubcategories);
-router.get('/:id', categoryController.getSubcategoryById);
+router.get('/:id', subcategoryController.getSubcategoryById);
 
 router.put('/:id',
     verifyToken,
     checkRole(['admin','coordinador']),
-    validateSubcategory,
-    categoryController.updateCategory
+    subcategoryController.updateSubcategory
 );
 
 router.delete('/:id',
     verifyToken,
     checkRole('admin'),//no va a validate por que borra toda la informacion
-    categoryController.deleteCategory
+    subcategoryController.deleteSubcategory
 );
 
 module.exports = router;

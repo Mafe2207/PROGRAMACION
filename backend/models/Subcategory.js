@@ -30,8 +30,8 @@ const subcategorySchema = new mongoose.Schema({
   //relacion 1 - muchos una categoria puede tener muchas subcategorias
 
   category: {
-    type: mongoose.Schema.Type.ObjectId,
-    ref: 'category', //puede ser poblado con .populate ('category)
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'category', //puede ser poblado con .populate('category')
     required: [true, 'la categoria es requerida']
   },
 

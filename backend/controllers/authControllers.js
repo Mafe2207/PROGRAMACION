@@ -4,7 +4,7 @@
  */
 
 const User = require('../models/User');
-const bcrypt = require('bcrypt'); // encriptar es un modelo de seguridad para las contraseñas, no se pone en las carpetas. 
+const bcrypt = require('bcryptjs'); // usar bcryptjs instalado en package.json
 const jwt = require('jsonwebtoken'); //para generar el token de autenticación 
 const config = require('../config/auth.config'); //para obtener la clave secreta del JWT
 
@@ -21,27 +21,27 @@ const config = require('../config/auth.config'); //para obtener la clave secreta
 
 exports.signup = async (req , res) => {
     try {
-        //crear nuevo usuario
+        // crear nuevo usuario
         const user = new User({
             username: req.body.username,
             email: req.body.email,
             password: req.body.password,
-            role: req.body.role || 'auxiliar' //por defecto el rol es auxiliar si no especifica 
+            role: req.body.role || 'auxiliar' // por defecto el rol es auxiliar si no especifica 
         });
 
-        //Guardar en base de datos
-        //La contraseña se encripta automaticamente en el middelware del modelo 
+        // Guardar en base de datos
+        // La contraseña se encripta automáticamente en el middleware del modelo 
         const savedUser = await user.save();
 
-        //generar token jwt que expira en 24 horas 
+        // generar token jwt que expira en 24 horas 
         const token = jwt.sign(
             {
                 id: savedUser._id,
-                role:savedUser.role,
-                email:savedUser.email
+                role: savedUser.role,
+                email: savedUser.email
             },
             config.secret,
-            {expiresIn: config.jwExpiration}
+            { expiresIn: config.jwtExpiration }
         );
         // preparando respuesta
         const userResponse = {
@@ -50,16 +50,16 @@ exports.signup = async (req , res) => {
             email: savedUser.email,
             role: savedUser.role,
         };
-        //POSTMAN 200 AFIRMATIVO- USUARIO REGISTRADO EXITOSAMENTE 
-        res.estatus(200).json({
-            succes:true,
+        // POSTMAN 200 AFIRMATIVO - USUARIO REGISTRADO EXITOSAMENTE 
+        res.status(200).json({
+            success: true,
             message: 'Usuario registrado exitosamente!',
             token: token,
             user: userResponse
         });
     } catch (error) {
         return res.status(500).json({
-            success:false,
+            success: false,
             message: 'Error en el registro de usuario!',
             error: error.message
         });
@@ -76,7 +76,7 @@ exports.signup = async (req , res) => {
  * Token se usa para autenticar futuras solicitudes del usuario
  */
 
-exports.sigin = async (req, res) => {
+exports.signin = async (req, res) => {
     try {
         //validar que se envie el email o username
         if(!req.body.email && !req.body.username) {
@@ -118,7 +118,7 @@ exports.sigin = async (req, res) => {
         }
 
         //Comparar contraseña enviada con el hash almacenado -HASH: contraseña encriptada
-        const ispasswordValid = await bcrypyt.compare (req .body.password, user.password);
+        const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
         
         if (!isPasswordValid) {
             return res.status(401).json({
@@ -135,22 +135,22 @@ exports.sigin = async (req, res) => {
                 email: user.email
             },
             config.secret,
-            { expiresIn: config.jwtExpiration}
+            { expiresIn: config.jwtExpiration }
         );
 
-        //prepara respuesta sin mostrar contraseña 
+        // prepara respuesta sin mostrar contraseña 
         const userResponse = {
             id: user._id,
             username: user.username,
             email: user.email,
             role: user.role
         };
-        //POSTMAN 200 AFIRMATIVO - Usuario registrado exitosamente
+        // POSTMAN 200 AFIRMATIVO - Usuario iniciado sesión exitosamente
         res.status(200).json({
             success: true,
-            message: 'Inicio de sesion exitoso!',
-            token:token,
-            user: UserResponse
+            message: 'Inicio de sesión exitoso!',
+            token: token,
+            user: userResponse
         });
     } catch (error) {
         return res.status(500).json({

@@ -10,7 +10,7 @@
  // trae esquemas de productos
 const Product = require('../models/Product');
 const Category = require('../models/Category');
-const Subcategory = require('../ models/Subcategory');
+const Subcategory = require('../models/Subcategory');
 
 /**
  * /**
@@ -26,7 +26,7 @@ const Subcategory = require('../ models/Subcategory');
  * 500: Error en base de datos
  * */
 
-exports.createProduct = async (req, res) => { // esta funcion exporta la peticion y la respuesta de http 
+exports.createProducts = async (req, res) => { // esta funcion exporta la peticion y la respuesta de http 
     try { 
 
         const { name, description, price, stock, category, subcategory} = req.body; //estructura de los campo de peticion 
@@ -169,7 +169,7 @@ exports.getProducts = async (req, res) => { // reliza una consulta del http
  * Retorna: Producto poblado con categoria y subactegoria
  */
 
-exports.getPorductById = async (req, res) => {
+exports.getProductsById = async (req, res) => {
     try {
         //Obtener el producto por ID con datos relacionados (populate)
         const product = await Product.findById(req.params.id)
@@ -213,7 +213,7 @@ exports.getPorductById = async (req, res) => {
  * - Retorna: producto actiualizado
  */
 
-exports.updateProduct = async (req, res) => {
+exports.updateProducts = async (req, res) => {
     try{
         const { name, description, price, stock, category, subcategory } = req.body;
         const updateData = {};
@@ -292,7 +292,7 @@ exports.updateProduct = async (req, res) => {
  * SOFT DELETE: Solo marca actie: false
  * HARD DELETE: Elimina permanentemente el documento 
  */
-exports.deleteProduct = async (req, res) => {
+exports.deleteProducts = async (req, res) => {
     try {
         const isHardDelete = req.query.hardDelete === 'true';
         const product = await Product.findById(req.params.id);

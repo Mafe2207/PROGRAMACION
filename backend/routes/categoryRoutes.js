@@ -12,8 +12,8 @@
 
 const express = require('express');
 const router = express.Router();
-const categoryController = require('/../Controllers/categoryController');
-const { verifyToken } = require('../middlewares/authJwt');
+const categoryController = require('../controllers/categoryControllers');
+const { verifyToken, checkRole } = require('../middlewares');
 
 //RUTA CRUD
 router.post('/',
