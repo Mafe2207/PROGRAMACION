@@ -16,7 +16,7 @@ const Subcategory = require('../models/Subcategory');
  * /**
  * CREATE: crear nuevo producto
  * POST / api/products
- * Body: { name, descripcion,price stock, category, subcatgory } 
+ * Body: { name, description, price, stock, category, subcategory } 
  * Auth Bearer token requerido
  * Roles: admmin y coordinador
  * body requerido:
@@ -29,12 +29,12 @@ const Subcategory = require('../models/Subcategory');
 exports.createProducts = async (req, res) => { // esta funcion exporta la peticion y la respuesta de http 
     try { 
 
-        const { name, description, price, stock, category, subcategory} = req.body; //estructura de los campo de peticion 
+        const { name, description, price, stock, category, subcategory} = req.body; //estructura de los campos de petición 
         
         //=== VALIDACIONES === 
         
-        //Verificar que todos los campos requeridos esten presentes
-        if (!name|| !description || !price || !stock || !category ||!subcategory) {
+        //Verificar que todos los campos requeridos estén presentes
+        if (!name || !description || price == null || stock == null || !category || !subcategory) {
             return res.status(400).json({
             success: false,
             message: 'todos los campos obligatorios',
@@ -68,7 +68,7 @@ exports.createProducts = async (req, res) => { // esta funcion exporta la petici
 //===== CREAR PRODUCTO =====
     const product = new Product({
         name,
-        descripcion,
+        description,
         price,
         stock,
         category,
@@ -132,7 +132,7 @@ exports.getProducts = async (req, res) => { // reliza una consulta del http
         const activeFilter = includeInactive ? {} : { active: { $ne: false} };
 
         //Obtener productos con datos relacionados
-        const products = await product.find(activeFilter)
+        const products = await Product.find(activeFilter)
             .populate('category', 'name')
             .populate('subcategory', 'name')
             .sort({ createdAt: -1});
@@ -173,7 +173,7 @@ exports.getProductsById = async (req, res) => {
     try {
         //Obtener el producto por ID con datos relacionados (populate)
         const product = await Product.findById(req.params.id)
-            .populate('category', 'name descripcion')
+            .populate('category', 'name description')
             .populate('subcategory', 'name description');
 
         if (!product) {
@@ -220,7 +220,7 @@ exports.updateProducts = async (req, res) => {
 
         // Agregar solo lois campos que fueronb enviados 
         if (name) updateData.name = name;
-        if(description) updateData.descripcion = descripcion;
+        if (description) updateData.description = description;
         if (price) updateData.price = price;
         if (stock) updateData.stock = stock;
         if (category) updateData.category = category;
@@ -231,7 +231,7 @@ exports.updateProducts = async (req, res) => {
             if (category) {
                 const categoryExists = await Category.findById(category);
                 if (!categoryExists) {
-                    return res.status(400).josn({
+                    return res.status(400).json({
                         success: false,
                         message: 'la categoria solicitada no existe'
                     });
@@ -239,13 +239,13 @@ exports.updateProducts = async (req, res) => {
                 }
             }
             if (subcategory) {
-                const subcategoryExists = await subcategory.findOne({
+                const subcategoryExists = await Subcategory.findOne({
                     _id: subcategory,
                     category: category || updateData.category
                 });
 
                 if (!subcategoryExists) {
-                    return res.status(404).josn({
+                    return res.status(404).json({
                         success: false,
                         message: 'La subcategoria no existe o no pertenece a la categoria'
                     });
@@ -253,9 +253,9 @@ exports.updateProducts = async (req, res) => {
             }
         }
         //  Validar en producto en BD
-        const updateProduct = await Product.findByIdAndupdate(req.params.id, updateData,{
+        const updateProduct = await Product.findByIdAndUpdate(req.params.id, updateData,{
             new: true,
-            runvalidators: true
+            runValidators: true
         }).populate('category', 'name')
             .populate('subcategory', 'name')
             .populate('createdBy', 'username email');

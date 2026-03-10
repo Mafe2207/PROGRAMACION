@@ -16,10 +16,10 @@ const categorySchema = new mongoose.Schema({name:{
     unique: true,
     trim: true //elimina espacios en blanco al inicio y al final
   },
-  // Descripcion de la categoria - requerida 
-  descripcion:{
+  // Descripción de la categoría - requerida 
+  description:{
     type: String,
-    required:[true, 'la categoria es requerida'],
+    required:[true, 'la descripción es requerida'],
     trim: true //Elimina espacios 
   },
 
@@ -81,10 +81,10 @@ categorySchema.pre('save', async function(next) {
  * aumentar la velocidad de las busquedas 
  */
 
-categorySchema.index({namr: 1}, {
+// índice único en el nombre para evitar duplicados
+categorySchema.index({name: 1}, {
   unique: true,
-  name: 'name_1' // nombre explicito para eitar conflictos
-
+  name: 'name_1' // nombre explicito para evitar conflictos
 });
 
 //Exportar el modelo 

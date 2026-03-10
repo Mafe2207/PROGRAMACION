@@ -5,7 +5,7 @@
  */
 
 
-const category = require('../models/Category');
+const Category = require('../models/Category');
 /**
  * Create: Crear nueva categoria
  * POST /api/categories
@@ -21,36 +21,43 @@ const category = require('../models/Category');
  * 
  **/
 
-exports.createCategory =async (req , res) => {
+exports.createCategory = async (req, res) => {
     try {
-        const {name,description} = req.body;
+        const { name, description } = req.body;
 
         //validación de los campos de entrada
-        if (!name || typeof name !== 'string' || name.trim()){
-
+        if (!name || typeof name !== 'string' || !name.trim()) {
             return res.status(400).json({
                 success: false,
-                message: 'El nombre es obligatorio y debe ser texto valido'
+                message: 'El nombre es obligatorio y debe ser texto válido'
             });
         }
+        if (!description || typeof description !== 'string' || !description.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'La descripción es obligatoria y debe ser texto válido'
+            });
+        }
+
         //limpia espacios en blanco
         const trimmedName = name.trim();
-        const trimmedDesc = descripcion.trim();
+        const trimmedDesc = description.trim();
 
         //verificar si ya existe una categoria con el mismo nombre 
-        const existingCategory = await Category.findOne ({name: trimmedName});
+        const existingCategory = await Category.findOne({ name: trimmedName });
         
         if (existingCategory) {
             return res.status(400).json({
                 success: false,
-                messge: 'Ya existe una categoria con ese nombre'
+                message: 'Ya existe una categoría con ese nombre'
             });
-    }
-    //crear nueva categoria 
-    const newCategory =  new Category({
-        name: trimmedName, //Guardar el nombre sinb espacios en blanco ak crear la categoria 
-        description: trimmedDesc //Guardar la descripcion sin espacios en blanco al crear la categoria 
-    });
+        }
+
+        //crear nueva categoria 
+        const newCategory = new Category({
+            name: trimmedName, //Guardar el nombre sin espacios en blanco al crear la categoría 
+            description: trimmedDesc //Guardar la descripción sin espacios en blanco al crear la categoría 
+        });
 
     await newCategory.save();
 
@@ -64,16 +71,16 @@ exports.createCategory =async (req , res) => {
         console.error('Error en createCategory:', error);
 
         //manejo de error de indice unico 
-        if(error.code === 11000){
+        if (error.code === 11000) {
             return res.status(400).json({
                 success: false,
-                message: 'ya existe una categoria con ese nombre'
+                message: 'ya existe una categoría con ese nombre'
             });
         }
-        // Error generico del servidor
+        // Error genérico del servidor
         res.status(500).json({
             success: false,
-            message: 'Error al crear la categoria',
+            message: 'Error al crear la categoría',
             error: error.message
         });
     }
@@ -92,25 +99,25 @@ exports.createCategory =async (req , res) => {
 
 exports.getCategories = async (req, res) => {
     try {
-    //por defecto solo muestra las categorias activas 
-    // InvludeInactive = true permite ver todas las categorias incluyendo las desactivadas
-    const includeInactive = req.query.includeInactive === 'true';
-    const activeFilter = includeInactive ? {} : { active: { $ne: false }};
+        //por defecto solo muestra las categorias activas 
+        // IncludeInactive = true permite ver todas las categorias incluyendo las desactivadas
+        const includeInactive = req.query.includeInactive === 'true';
+        const activeFilter = includeInactive ? {} : { active: { $ne: false } };
         
-        const categories = await Category.find(activeFilter).scort ({createdAt: -1});
+        const categories = await Category.find(activeFilter).sort({ createdAt: -1 });
         res.status(200).json({
-            Success: true,
+            success: true,
             data: categories
         });
     } catch (error) {
         console.error('Error en getCategories', error);
-        res.tatus(500).json({
+        res.status(500).json({
             success: false,
-            message: 'Error al obtener categorias',
+            message: 'Error al obtener categorías',
             error: error.message
         });
-    }    
-    };
+    }
+};
 
 /**
  * READ Obtener una categoria por el especificador - id 
@@ -120,30 +127,27 @@ exports.getCategories = async (req, res) => {
 
 exports.getCategoryById = async (req, res) => {
     try {
-    //por defecto solo las categorias acctivas 
-    // InvludeInactive =req.query.includeInactive
-    const category = await Category.findById(req.params.id);
-        
-    if (!category) {
-        return res.status(200).json({
-            Success: true,
+        const category = await Category.findById(req.params.id);
+        if (!category) {
+            return res.status(404).json({
+                success: false,
+                message: 'Categoría no encontrada'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
             data: category
         });
+
+    } catch (error) {
+        console.error('Error en getCategoryById', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener categoría',
+            error: error.message
+        });
     }
-
-    res.status(200).json({
-        success: true,
-        data: category
-    });
-
-} catch (error) {
-    console.error('Error en getcategorias', error);
-    res.tatus(500).json({
-        success: false,
-        message: 'Error al obtener categorias',
-        error: error.message
-    });
-}    
 };
 
     /**
@@ -162,9 +166,9 @@ exports.getCategoryById = async (req, res) => {
      * 500: error de base de datos 
      * 
      */
-exports.updateCategory = async (reportError, res) => {
-    try{
-        const { name, description} = req.body;
+exports.updateCategory = async (req, res) => {
+    try {
+        const { name, description } = req.body;
         const updateData = {};
 
         //solo actualizar campos que fueron enviados
@@ -176,7 +180,7 @@ exports.updateCategory = async (reportError, res) => {
             const existingCategory = await Category.findOne({ name: updateData.name, _id: {$ne: req.params.id}});
             
             //Asegura que el nombre no sea el mismo id
-            if (existing) {
+            if (existingCategory) {
                 return res.status (400).json({
                     success: false,
                     message: 'Este nombre ya existe'
@@ -185,7 +189,7 @@ exports.updateCategory = async (reportError, res) => {
         }
 
         if (description) {
-            updateData.description = decription.trim();
+            updateData.description = description.trim();
         }
 
         //Actualizar la categoria en la base de datos 
@@ -241,7 +245,7 @@ exports.updateCategory = async (reportError, res) => {
 exports.deleteCategory = async (req, res) => {
     try {
         const Subcategory = require('../models/Subcategory');
-        const SubProduct = require('../models/Product');
+        const Product = require('../models/Product');
         const isHardDelete = req.query.hardDelete === 'true';
         
         //Buscar la categoria a eliminar 
@@ -255,39 +259,39 @@ exports.deleteCategory = async (req, res) => {
         }
 
         if (isHardDelete) {
-            // Eliminar en cascada subcategoria y productos relacionados 
+            // Eliminar en cascada subcategorías y productos relacionados 
 
-            //paso 1 obtener ids de todas la subcategorias relacionada a la subcategoria 
-            const subIds = (await SubCategory.find({category: req.params.id})).map(s => s._id);
+            // paso 1 - obtener ids de todas las subcategorías de esta categoría
+            const subIds = (await Subcategory.find({ category: req.params.id })).map(s => s._id);
 
-                //paso 2 eliminar todos los productos de categoria
-                await Product.deleteMany({ category: req. params.id });
+            // paso 2 - eliminar todos los productos que pertenecen a la categoría
+            await Product.deleteMany({ category: req.params.id });
 
-                //paso 3 eliminar todos los productos de lassubcategoria de esta categoria 
-                await SubCategory.deleteMany({ subcategory: {$in: subIds} });
+            // paso 3 - eliminar los productos de las subcategorías de esta categoría
+            await Product.deleteMany({ subcategory: { $in: subIds } });
 
-                // paso 4 eliminar todas las subcategorias de esta categoria 
-                await SubCategory.deleteMany({ category: req.params.id});
+            // paso 4 - eliminar todas las subcategorías de esta categoría
+            await Subcategory.deleteMany({ category: req.params.id });
 
-                //paso 5 eliminar las categoria misma 
-                await Category.findByIdAndDelete(req.params.id);
-                
-                res.status(200).json({
-                    success: true,
-                    message: 'Categoria eliminada permanentemente y sus subcategorias y productos relacionados',
-                    data: {
-                        category: category
-                    }
-                });
+            // paso 5 - eliminar la propia categoría
+            await Category.findByIdAndDelete(req.params.id);
 
-            } else {
+            res.status(200).json({
+                success: true,
+                message: 'Categoría eliminada permanentemente y sus subcategorías y productos relacionados',
+                data: {
+                    category: category
+                }
+            });
+
+        } else {
 
                 //Soft delete - solo mrac la categoria como incativa 
                 category.active = false;
                 await category.save();
 
                 //Desactivar todas las subcategorias relacionadas
-                const subcatgories = await Subcategory.updateMany(
+                const subcategories = await Subcategory.updateMany(
                     { category: req.params.id }, 
                     { active: false }
                 );
@@ -298,13 +302,13 @@ exports.deleteCategory = async (req, res) => {
                     { active: false} 
                 );
 
-                res.status(200).josn({
+                res.status(200).json({
                     success: true,
-                    message: 'Categoria desactivada y sus subcategorias y productos asociados',
+                    message: 'Categoría desactivada y sus subcategorías y productos asociados',
                     data: {
                         category: category,
                         subcategoriesDeactivated: subcategories.modifiedCount,
-                        productsDeactivated: products.mofiedCount
+                        productsDeactivated: products.modifiedCount
                     }
                 });
             }     

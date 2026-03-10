@@ -19,10 +19,10 @@ const subcategorySchema = new mongoose.Schema({
     trim: true //elimina espacios en blanco al inicio y al final
   },
 
-  // Descripcion dela subcategoria - requerida 
-  descripcion:{
+  // Descripción de la subcategoría - requerida 
+  description:{
     type: String,
-    required:[true, 'la descripcion es requerida'],
+    required:[true, 'la descripción es requerida'],
     trim: true //Elimina espacios 
   },
 

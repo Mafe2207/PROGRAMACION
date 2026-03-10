@@ -21,10 +21,10 @@ const productSchema = new mongoose.Schema({
     trim: true //Elimina espacios en blanco al inicio y al final
   },
 
-  // Descripcion del producto - requerida 
-  descripcion:{
+  // Descripción del producto - requerida 
+  description:{
     type: String,
-    required:[true, 'la descripcion es requerida'],
+    required:[true, 'la descripción es requerida'],
     trim: true //Elimina espacios al inicio y final
   },
 

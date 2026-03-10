@@ -26,14 +26,23 @@ const Category = require('../models/Category');
 exports.createSubcategory = async (req, res) => {
     try{
         const { name, description, category } = req.body;
-        
-        //Validar que la categoria padre exista
-        const parentCategory = await Category.findById(category); 
 
-        if (!parentCategory){
+        if (!name || typeof name !== 'string' || !name.trim()) {
+            return res.status(400).json({ success: false, message: 'El nombre es obligatorio' });
+        }
+        if (!description || typeof description !== 'string' || !description.trim()) {
+            return res.status(400).json({ success: false, message: 'La descripción es obligatoria' });
+        }
+        if (!category) {
+            return res.status(400).json({ success: false, message: 'La categoría padre es obligatoria' });
+        }
+        //Validar que la categoria padre exista
+        const parentCategory = await Category.findById(category);
+
+        if (!parentCategory) {
             return res.status(404).json({
                 success: false,
-                message: 'La categoria no existe'
+                message: 'La categoría no existe'
             });
         }
 
@@ -47,21 +56,21 @@ exports.createSubcategory = async (req, res) => {
         
         res.status(201).json({
             success: true,
-            message: 'Subcategoria creada exitosamente',
+            message: 'Subcategoría creada exitosamente',
             data: newSubcategory
         });
     } catch (error) {
-        console.error('Error en crear la Sub Categoria:', error);
+        console.error('Error en crear la Subcategoria:', error);
 
-        if(error.message.includes('duplicate key') || error.message.includes('ya existe')){
+        if (error.message.includes('duplicate key') || error.message.includes('ya existe')) {
             return res.status(400).json ({
                 success: false,
-                message: 'Ya existe una Subcategoria con ese nombre'
+                message: 'Ya existe una subcategoría con ese nombre'
             });
         }
         res.status(500).json ({
             success: false, 
-            message: 'Error al crear categoria',
+            message: 'Error al crear subcategoría',
         });
     }
 };
@@ -152,22 +161,27 @@ exports.updateSubcategory = async (req, res) => {
 
         const {name, description, category} = req.body;
 
-        // Verificar si cambia la categoria padre
-
-        if (name) {
-
-            const parentCategory = await Category.findById(category);          
-            // Asegura que el nuevo nombre no sea el mismo id
+        // Verificar si cambia la categoría padre (solo si se proporciona)
+        if (category) {
+            const parentCategory = await Category.findById(category);
             if (!parentCategory) {
                 return res.status(400).json({
                     success: false,
-                    message: 'La categoria no existe'
+                    message: 'La categoría no existe'
                 });
             }
         }
         
         // Construir el objeto de actualizacion solo con campos enviados
-        const updateSubcategory = await Subcategory.findByIdAndUpdate(req.params.id, { name: name ? name.trim(): undefined, description: description ? descripion.trim(): undefined, category}, { new: true, runValidators: true});
+        const updateSubcategory = await Subcategory.findByIdAndUpdate(
+            req.params.id,
+            {
+                name: name ? name.trim() : undefined,
+                description: description ? description.trim() : undefined,
+                category: category || undefined
+            },
+            { new: true, runValidators: true }
+        );
         
         if (!updateSubcategory) {
             return res.status(404).json({
@@ -221,9 +235,9 @@ exports.deleteSubcategory = async (req, res) => {
         const isHardDelete = req.query.hardDelete === 'true';
 
         // Buscar la subcategoria a eliminar por su id
-        const subcategory = await Subcategory.findById(req.params.id);
+        const Subcategory = await Subcategory.findById(req.params.id);
 
-        if (!subcategory) {
+        if (!Subcategory) {
             return res.status(404).json({
                 success: false,
                 message: 'Subcategoria no encontrada'
@@ -234,7 +248,7 @@ exports.deleteSubcategory = async (req, res) => {
             // Eliminar en cascada subcategorias y productos relacionados
 
             // Paso 1 - Obtener IDs de todas los productos relacionados
-            await Product.deleteMany({ subcategory: req.params.id });
+            await Product.deleteMany({ Subcategory: req.params.id });
 
             // Paso 2 - Eliminar todas los productos de la categoria
             await Subcategory.findByIdAndDelete( req.params.id );
@@ -243,19 +257,19 @@ exports.deleteSubcategory = async (req, res) => {
                 success: true,
                 message: 'Subcategoria eliminada permanentemente y sus productos relacionados',
                 data: {
-                    subcategory: subcategory
+                    subcategory: Subcategory
                 }
             });
 
         } else {
 
             // Soft delete - Solo marca la categoria como inactiva
-            subcategory.active = false;
-            await subcategory.save();
+            Subcategory.active = false;
+            await Subcategory.save();
 
             // Desactivar todos los productos ralacionados
             
-            const products = await Product.updateMany(
+            const Product = await Product.updateMany(
                 { subcategory: req.params.id },
                 { active: false}
             );
